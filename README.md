@@ -1,5 +1,7 @@
 # dthree
 
+[![Build Status](https://travis-ci.org/seracio/dthree.svg?branch=master)](https://travis-ci.org/seracio/dthree)
+
 `dthree` is a small helper inspired by [d3] selection module. 
 It splits a data array into 3 distinct pools : `enter`, `update` and `exit`.
 Unlike its [d3] counterpart, it doesn't bind the data to the DOM, which could 

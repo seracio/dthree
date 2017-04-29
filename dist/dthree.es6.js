@@ -193,8 +193,9 @@ var forEach_1 = forEach;
 
 //      
 var selectionPrototype = {
-  data: function(data               , getKey           )         {
+  data: function(data               , getKey)         {
     var this$1 = this;
+    if ( getKey === void 0 ) getKey           = function (value, index) { return index; };
 
 
     // flush
@@ -207,7 +208,7 @@ var selectionPrototype = {
     this.__data.update = {};
 
     forEach_1(data, function (value, index) {
-      var key = !!getKey ? getKey(value, index) : index;
+      var key = getKey(value, index);
       // already exists:
       // --> add in update pool
       // --> remove from exit

@@ -2,7 +2,7 @@
 import {forEach, isCollection} from 'iterall';
 
 const selectionPrototype = {
-  data: function(data: Iterable<any>, getKey: ?Function): Object {
+  data: function(data: Iterable<any>, getKey: Function = (value, index) => index): Object {
 
     // flush
     // exit will receive by default previous enter and update
@@ -14,7 +14,7 @@ const selectionPrototype = {
     this.__data.update = {};
 
     forEach(data, (value, index) => {
-      const key = !!getKey ? getKey(value, index) : index;
+      const key = getKey(value, index);
       // already exists:
       // --> add in update pool
       // --> remove from exit

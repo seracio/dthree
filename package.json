@@ -36,5 +36,8 @@
       "@ava/stage-4",
       "stage-2"
     ]
+  },
+  "dependencies": {
+    "iterall": "^1.1.1"
   }
 }

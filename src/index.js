@@ -1,59 +1,62 @@
 // @flow
+import {forEach, isCollection} from 'iterall';
 const selectionPrototype = {
-  data: function(data: Array<any>, getKey: ?Function): Object {
-    const precValues = { ...this.__data.enter, ...this.__data.update };
+  data: function (data: Iterable<any>, getKey: ?Function): Object {
+    if (!isCollection(data)) {
+      throw new Error('data param should be an Iterable');
+    }
+
     // flush
-    this.__data = {
-      enter: {},
-      exit: {},
-      update: {}
-    };
-    for (let index: number = 0; index < data.length; index += 1) {
-      const value = data[index];
-      const key = !!getKey ? getKey(value) : index;
+    // exit will receive by default previous enter and update
+    // we'll remove values from it over iteration
+    // enter and update are flushed
+    // and will be populated over iteration
+    this.__data.exit = new Map([...this.__data.update.entries(), ...this.__data.enter.entries()]);
+    this.__data.enter.clear();
+    this.__data.update.clear();
+
+    forEach(data, (value, index) => {
+      const key = !!getKey ? getKey(value, index) : index;
       // already exists:
       // --> add in update pool
       // --> remove from precValues to compute exit quickly
-      if (key in precValues) {
-        this.__data.update[key] = value;
-        delete precValues[key];
+      if (this.__data.exit.has(key)) {
+        this.__data.update.set(key, value);
+        this.__data.exit.delete(key);
       }
       // else we add it
       else {
-        this.__data.enter[key] = value;
+        this.__data.enter.set(key, value);
       }
-    }
-    this.__data.exit = { ...precValues };
+    });
+    // chaining pattern
     return this;
   },
-  enter: function() {
-    return Object.values(this.__data.enter);
+  enter: function () {
+    return [...this.__data.enter.values()];
   },
-  update: function() {
-    return Object.values(this.__data.update);
+  update: function () {
+    return [...this.__data.update.values()];
   },
-  all: function() {
-    return Object.values({
-      ...this.__data.enter,
-      ...this.__data.update,
-    });
+  all: function () {
+    return [...this.update(), ...this.enter()];
   },
-  exit: function() {
-    return Object.values(this.__data.exit);
+  exit: function () {
+    return [...this.__data.exit.values()];
   }
 };
 
 const dthree = {
   selections: {},
-  selectAll: function(namespace: string) {
+  selectAll: function (namespace: string) {
     if (typeof namespace === 'undefined') throw new Error('dthree.selectAll: namespace is not provided');
     if (typeof namespace !== 'string') throw new Error('dthree.selectAll: namespace should be a string');
     if (!(namespace in this.selections)) {
       this.selections[namespace] = Object.create(selectionPrototype);
       this.selections[namespace].__data = {
-        enter: {},
-        exit: {},
-        update: {}
+        enter: new Map(),
+        exit: new Map(),
+        update: new Map()
       };
     }
     return this.selections[namespace];
@@ -61,4 +64,3 @@ const dthree = {
 };
 
 export default dthree;
-

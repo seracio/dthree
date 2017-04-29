@@ -51,3 +51,13 @@ test('selections.data should update an existing selection', t => {
   t.deepEqual(dthree.selectAll('test2').all(), [1,2,4,5]);
 });
 
+test('selections.data should update an existing selection with getKey', t => {
+  dthree.selectAll('test3').data([1, 2, 3, 4], (value, index) => `${value}_${index}`);
+  t.deepEqual(dthree.selectAll('test3').enter(), [1,2,3,4]);
+  t.deepEqual(dthree.selectAll('test3').update(), []);
+  t.deepEqual(dthree.selectAll('test3').exit(), []);
+  dthree.selectAll('test3').data([1, 3, 4, 5], (value, index) => `${value}_${index}`);
+  t.deepEqual(dthree.selectAll('test3').enter(), [3,4,5]);
+  t.deepEqual(dthree.selectAll('test3').update(), [1]);
+  t.deepEqual(dthree.selectAll('test3').exit(), [2,3,4]);
+});

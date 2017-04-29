@@ -7,9 +7,7 @@ It splits a data array into 3 distinct pools : `enter`, `update` and `exit`.
 Unlike its [d3] counterpart, it doesn't bind the data to the DOM, which could 
    be useful in a non DOM context (WebGL for instance)
     
-It's not well tested yet.  
-   
-Internally, it uses ES6 Map, so you'll have to bring a [polyfill](https://github.com/paulmillr/es6-shim) to manage ES5 environments.   
+It's not well tested yet.     
 
 ## Install
 

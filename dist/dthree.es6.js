@@ -43,26 +43,6 @@
 var SYMBOL_ITERATOR = typeof Symbol === 'function' && Symbol.iterator;
 
 /**
- * Returns true if the provided object implements the Iterator protocol via
- * either implementing a `Symbol.iterator` or `"@@iterator"` method.
- *
- * @example
- *
- * var isIterable = require('iterall').isIterable
- * isIterable([ 1, 2, 3 ]) // true
- * isIterable('ABC') // true
- * isIterable({ length: 1, 0: 'Alpha' }) // false
- * isIterable({ key: 'value' }) // false
- * isIterable(new Map()) // true
- *
- * @param obj
- *   A value which might implement the Iterable protocol.
- * @return {boolean} true if Iterable.
- */
-function isIterable(obj) {
-  return !!getIteratorMethod(obj)
-}
-/**
  * Returns true if the provided object implements the Array-like protocol via
  * defining a positive-integer `length` property.
  *
@@ -83,42 +63,6 @@ function isArrayLike(obj) {
   var length = obj != null && obj.length;
   return typeof length === 'number' && length >= 0 && length % 1 === 0
 }
-/**
- * Returns true if the provided object is an Object (i.e. not a string literal)
- * and is either Iterable or Array-like.
- *
- * This may be used in place of [Array.isArray()][isArray] to determine if an
- * object should be iterated-over. It always excludes string literals and
- * includes Arrays (regardless of if it is Iterable). It also includes other
- * Array-like objects such as NodeList, TypedArray, and Buffer.
- *
- * @example
- *
- * var isCollection = require('iterall').isCollection
- * isCollection([ 1, 2, 3 ]) // true
- * isCollection('ABC') // false
- * isCollection({ length: 1, 0: 'Alpha' }) // true
- * isCollection({ key: 'value' }) // false
- * isCollection(new Map()) // true
- *
- * @example
- *
- * var forEach = require('iterall').forEach
- * if (isCollection(obj)) {
- *   forEach(obj, function (value) {
- *     console.log(value)
- *   })
- * }
- *
- * @param obj
- *   An Object value which might implement the Iterable or Array-like protocols.
- * @return {boolean} true if Iterable or Array-like Object.
- */
-function isCollection(obj) {
-  return Object(obj) === obj && (isArrayLike(obj) || isIterable(obj))
-}
-var isCollection_1 = isCollection;
-
 /**
  * If the provided object implements the Iterator protocol, its Iterator object
  * is returned. Otherwise returns undefined.
@@ -249,64 +193,61 @@ var forEach_1 = forEach;
 
 //      
 var selectionPrototype = {
-  data: function (data               , getKey           )         {
+  data: function(data               , getKey           )         {
     var this$1 = this;
 
-    if (!isCollection_1(data)) {
-      throw new Error('data param should be an Iterable');
-    }
 
     // flush
     // exit will receive by default previous enter and update
     // we'll remove values from it over iteration
     // enter and update are flushed
     // and will be populated over iteration
-    this.__data.exit = new Map(this.__data.update.entries().concat( this.__data.enter.entries()));
-    this.__data.enter.clear();
-    this.__data.update.clear();
+    this.__data.exit = Object.assign({}, this.__data.enter, this.__data.update);
+    this.__data.enter = {};
+    this.__data.update = {};
 
     forEach_1(data, function (value, index) {
       var key = !!getKey ? getKey(value, index) : index;
       // already exists:
       // --> add in update pool
-      // --> remove from precValues to compute exit quickly
-      if (this$1.__data.exit.has(key)) {
-        this$1.__data.update.set(key, value);
-        this$1.__data.exit.delete(key);
+      // --> remove from exit
+      if (key in this$1.__data.exit) {
+        this$1.__data.update[key] = value;
+        delete this$1.__data.exit[key];
       }
       // else we add it
       else {
-        this$1.__data.enter.set(key, value);
+        this$1.__data.enter[key] = value;
       }
     });
-    // chaining pattern
     return this;
   },
-  enter: function () {
-    return [].concat( this.__data.enter.values() );
+  enter: function() {
+    return Object.values(this.__data.enter);
   },
-  update: function () {
-    return [].concat( this.__data.update.values() );
+  update: function() {
+    return Object.values(this.__data.update);
   },
-  all: function () {
-    return this.update().concat( this.enter());
+  all: function() {
+    return Object.values(Object.assign({}, this.__data.enter,
+      this.__data.update));
   },
-  exit: function () {
-    return [].concat( this.__data.exit.values() );
+  exit: function() {
+    return Object.values(this.__data.exit);
   }
 };
 
 var dthree = {
   selections: {},
-  selectAll: function (namespace        ) {
+  selectAll: function(namespace        ) {
     if (typeof namespace === 'undefined') { throw new Error('dthree.selectAll: namespace is not provided'); }
     if (typeof namespace !== 'string') { throw new Error('dthree.selectAll: namespace should be a string'); }
     if (!(namespace in this.selections)) {
       this.selections[namespace] = Object.create(selectionPrototype);
       this.selections[namespace].__data = {
-        enter: new Map(),
-        exit: new Map(),
-        update: new Map()
+        enter: {},
+        exit: {},
+        update: {}
       };
     }
     return this.selections[namespace];

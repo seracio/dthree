@@ -2,13 +2,11 @@
 
 [![Build Status](https://travis-ci.org/seracio/dthree.svg?branch=master)](https://travis-ci.org/seracio/dthree)
 
-`dthree` is a small helper inspired by [d3] selection module. 
-It splits a data array into 3 distinct pools : `enter`, `update` and `exit`.
-Unlike its [d3] counterpart, it doesn't bind the data to the DOM, which could 
-   be useful in a non DOM context (WebGL for instance)
+`dthree` is a small helper inspired by [d3] selection module for data join. 
+It splits a selection (populated by an `Iterable) into 3 distinct arrays : `enter`, `update` and `exit`.
+Unlike its [d3] counterpart, it doesn't bind the data to the DOM and solely return the arrays. 
+We use it when doing datavis in WebGL.
     
-It's not well tested yet.     
-
 ## Install
 
 ```
@@ -33,7 +31,10 @@ assert.deepEqual(mySelection.exit(), []);
 mySelection.data([0,1,2]);
 assert.deepEqual(mySelection.enter(), []);
 assert.deepEqual(mySelection.update(), [0,1,2]);
-assert.deepEqual(mySelection.exit(), [3]);
+assert.deepEqual(mySelection.exit(), [3]);`
+ 
+// use a getKey function to bind data (we use index by default)
+mySelection.data([0,1,2], (value, index) => `${value}_${index}`);
 ```
 
 ## API
